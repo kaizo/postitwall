@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en" ng-app>
+  <head>
+    <title>Post-it Wall</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css?family=Reenie+Beanie:regular" rel="stylesheet" type="text/css"> 
+    <style type="text/css">
+    *{
+      margin:0;
+      padding:0;
+    }
+    body{
+      font-family:arial,sans-serif;
+      font-size:100%;
+      margin:3em;
+      background:#666;
+      color:#fff;
+    }
+    h2,p{
+      font-size:100%;
+      font-weight:normal;
+    }
+    ul,li{
+      list-style:none;
+    }
+    ul{
+      overflow:hidden;
+      padding:3em;
+    }
+    ul li a{
+      text-decoration:none;
+      color:#000;
+      background:#ffc;
+      display:block;
+      height:10em;
+      width:10em;
+      padding:1em;
+      -moz-box-shadow:5px 5px 7px rgba(33,33,33,1);
+      -webkit-box-shadow: 5px 5px 7px rgba(33,33,33,.7);
+      box-shadow: 5px 5px 7px rgba(33,33,33,.7);
+      -moz-transition:-moz-transform .15s linear;
+      -o-transition:-o-transform .15s linear;
+      -webkit-transition:-webkit-transform .15s linear;
+    }
+    ul li{
+      margin:1em;
+      float:left;
+    }
+    ul li h2{
+      font-size:140%;
+      font-weight:bold;
+      padding-bottom:10px;
+    }
+    ul li p{
+      font-family:"Reenie Beanie",arial,sans-serif;
+      font-size:180%;
+    }
+    ul li a{
+      -webkit-transform: rotate(-6deg);
+      -o-transform: rotate(-6deg);
+      -moz-transform:rotate(-6deg);
+    }
+    ul li:nth-child(even) a{
+      -o-transform:rotate(4deg);
+      -webkit-transform:rotate(4deg);
+      -moz-transform:rotate(4deg);
+      position:relative;
+      top:5px;
+      background:#cfc;
+    }
+    ul li:nth-child(3n) a{
+      -o-transform:rotate(-3deg);
+      -webkit-transform:rotate(-3deg);
+      -moz-transform:rotate(-3deg);
+      position:relative;
+      top:-5px;
+      background:#ccf;
+    }
+    ul li:nth-child(5n) a{
+      -o-transform:rotate(5deg);
+      -webkit-transform:rotate(5deg);
+      -moz-transform:rotate(5deg);
+      position:relative;
+      top:-10px;
+    }
+    ul li a:hover,ul li a:focus{
+      box-shadow:10px 10px 7px rgba(0,0,0,.7);
+      -moz-box-shadow:10px 10px 7px rgba(0,0,0,.7);
+      -webkit-box-shadow: 10px 10px 7px rgba(0,0,0,.7);
+      -webkit-transform: scale(1.25);
+      -moz-transform: scale(1.25);
+      -o-transform: scale(1.25);
+      position:relative;
+      z-index:5;
+    }
+    </style>
+    
+    <script>
+      function MessageController($scope) {
+        var socket = io.connect();
+
+        $scope.messages = [];
+        $scope.roster = [];
+        $scope.name = '';
+        $scope.text = '';
+
+        socket.on('connect', function () {
+          $scope.setName();
+        });
+
+//+ Jonas Raoni Soares Silva
+//@ http://jsfromhell.com/array/shuffle [v1.0]
+function shuffle(o){ //v1.0
+    for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+    return o;
+};
+        socket.on('message', function (msg) {
+          $scope.messages.push(msg);
+          shuffle($scope.messages);
+          $scope.$apply();
+        });
+
+        socket.on('roster', function (names) {
+          $scope.roster = names;
+          $scope.$apply();
+        });
+
+        $scope.send = function send() {
+          console.log('Sending message:', $scope.text);
+          socket.emit('message', $scope.text);
+          $scope.text = '';
+        };
+
+        $scope.setName = function setName() {
+          socket.emit('identify', $scope.name);
+        };
+      }
+    </script>
+  </head>
+  <body ng-controller="MessageController">
+    <form ng-submit="send()">
+        <div class="span2">
+            <input type="text" class="input-block-level" ng-model="name" ng-change="setName()" placeholder="Your Name">
+            <input type="text" class="span6" ng-model="text" placeholder="Message">
+            <input type="submit" class="span1 btn btn-primary" value="Send" ng-disabled="!text">
+        </div>
+    </form>
+    <ul>
+        <li ng-repeat="msg in messages">
+            <a href="#">
+                <h2 ng-bind="msg.name"></h2>
+                <p ng-bind="msg.text"></p>
+            </a>
+        </li>
+    </ul>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="/js/angular.min.js"></script>
+  </body>
+</html>
